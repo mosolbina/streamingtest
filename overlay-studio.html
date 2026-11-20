@@ -1,0 +1,1210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Overlay Studio</title>
+<style>
+:root{--bg:#f6f3f1;--panel:#fff;--ink:#2b2528;--mute:#7b7075;--line:#e8e1de;--acc:#d98aa3;--accsoft:#f6dfe6;--pill:rgba(255,255,255,.28);--bd:rgba(255,255,255,.8);--tx:#fff;--t1:#d9dedb;--t2:rgba(205,212,208,.85);--mood:0;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#171416;--panel:#221e21;--ink:#f3eef0;--mute:#a1969b;--line:#352f33;--accsoft:#3a2a31}}
+:root[data-theme="dark"]{--bg:#171416;--panel:#221e21;--ink:#f3eef0;--mute:#a1969b;--line:#352f33;--accsoft:#3a2a31}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 Figtree,system-ui,sans-serif}
+header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;padding:18px 24px;border-bottom:1px solid var(--line)}
+h1{font-size:18px;margin:0;font-weight:700}
+.live{display:flex;align-items:center;gap:8px;color:var(--mute);font-size:13px}
+.wallet{font-weight:700;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:7px 14px;font-size:14px}
+.perks{margin:6px 0;padding-left:18px;font-size:13px;color:var(--mute)}
+.foldbar{display:flex;justify-content:flex-end;margin-bottom:10px}
+.fold{all:unset;box-sizing:border-box;width:100%;display:flex;justify-content:space-between;align-items:center;cursor:pointer;font-size:15px;font-weight:700;color:var(--ink)}
+.fold::after{content:"";width:8px;height:8px;border-right:2px solid var(--mute);border-bottom:2px solid var(--mute);transform:rotate(45deg);margin:0 4px 3px 0;transition:transform .2s}
+.collapsed .fold::after{transform:rotate(-45deg);margin-bottom:0}
+.fold:focus-visible{outline:2px solid var(--acc);outline-offset:4px;border-radius:6px}
+.collapsed .sbody{display:none}
+section:has(.fold){padding-top:14px;padding-bottom:14px}
+.sbody{margin-top:8px}
+.dot{width:9px;height:9px;border-radius:50%;background:#e25c6b;box-shadow:0 0 0 4px rgba(226,92,107,.2)}
+.seg{display:inline-flex;background:var(--line);border-radius:999px;padding:3px}
+.seg button{border:0;background:none;color:var(--mute);font:inherit;font-weight:600;padding:6px 14px;border-radius:999px;cursor:pointer}
+.seg button[aria-pressed=true]{background:var(--panel);color:var(--ink)}
+main{display:grid;grid-template-columns:minmax(280px,360px) 1fr;gap:28px;padding:24px;max-width:1080px;margin:0 auto}
+@media(max-width:760px){main{grid-template-columns:1fr;padding:16px}.stage{position:static!important}}
+.stage{position:sticky;top:16px;align-self:start}
+.phone{width:100%;max-width:300px;margin:0 auto;aspect-ratio:9/17;border:8px solid #111;border-radius:38px;position:relative;overflow:hidden;background:#b9aea6}
+.cam{position:absolute;inset:0;background:radial-gradient(circle at 50% 34%,#e9c9bb 0 11%,transparent 12%),radial-gradient(ellipse at 50% 38%,#a89583 0 24%,transparent 25%),radial-gradient(ellipse at 50% 92%,#f5f1ee 0 30%,transparent 31%),linear-gradient(#cfc6bf,#aaa098);filter:blur(7px);transform:scale(1.1)}
+.tint{position:absolute;inset:0;background:var(--t1);opacity:var(--mood,0);transition:background .4s,opacity .3s}
+.notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:42%;height:20px;background:#111;border-radius:0 0 14px 14px;z-index:5}
+.pill{position:absolute;top:30px;left:12px;right:12px;height:44px;border-radius:999px;display:flex;align-items:center;justify-content:center;gap:10px;font-weight:700;letter-spacing:.06em;color:var(--tx);background:var(--pill);border:1px solid var(--bd);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);transition:all .4s;z-index:3}
+.bar{position:absolute;bottom:26px;left:50%;transform:translateX(-50%);width:44%;height:30px;border-radius:999px;background:var(--pill);border:1px solid var(--bd);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);z-index:3;transition:all .4s}
+.bar::after{content:"";position:absolute;left:50%;top:50%;width:18px;height:3px;border-radius:2px;background:var(--tx);opacity:.7;transform:translate(-50%,-50%)}
+.charm{position:absolute;top:80px;left:50%;transform:translateX(-50%);font-size:24px;z-index:3}
+#gcv{position:absolute;inset:0;width:100%;height:100%;z-index:3;pointer-events:none}
+.stk{position:absolute;bottom:70px;font-size:40px;z-index:4;animation:rise 2.6s ease-out forwards;pointer-events:none}
+@keyframes rise{0%{opacity:0;transform:translateY(0) scale(.5)}15%{opacity:1;transform:translateY(-20px) scale(1.1)}100%{opacity:0;transform:translateY(-240px) scale(1)}}
+.scene{position:absolute;inset:0;z-index:6;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;font-weight:700;font-size:22px;color:var(--tx);background:var(--t2);opacity:0;visibility:hidden;transition:opacity .5s,transform .5s,filter .5s}
+.scene small{font-weight:500;font-size:13px;opacity:.75;margin-top:6px}
+.scene.slide{transform:translateY(100%)}.scene.blur{filter:blur(24px)}
+.scene.on{opacity:1;visibility:visible;transform:none;filter:none}
+.toast{margin:14px auto 0;text-align:center;color:var(--mute);font-size:13px;min-height:20px}
+section{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px;margin-bottom:16px}
+h2{font-size:15px;margin:0 0 4px}
+p.hint,.hint{margin:0 0 14px;color:var(--mute);font-size:13px}
+.row{display:flex;flex-wrap:wrap;gap:8px}.row+.row{margin-top:10px}
+.chip{border:1px solid var(--line);background:var(--panel);color:var(--ink);font:inherit;font-weight:500;padding:9px 14px;border-radius:12px;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+.chip:hover{border-color:var(--acc)}
+.chip[aria-pressed=true]{border-color:var(--acc);background:var(--accsoft)}
+.chip:disabled{opacity:.5;cursor:not-allowed}.chip:disabled:hover{border-color:var(--line)}
+.chip:focus-visible,.seg button:focus-visible,input:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.sw{width:14px;height:14px;border-radius:50%;border:1px solid rgba(0,0,0,.15)}
+.locked{opacity:.45}
+.locked::after{content:attr(data-cost);font-size:11px;font-weight:700;background:var(--line);color:var(--mute);padding:1px 7px;border-radius:999px}
+input[type=text]{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:9px 12px;width:100%;max-width:260px}
+input[type=range]{width:100%;max-width:260px;accent-color:var(--acc)}
+label.lab{display:block;font-weight:600;margin:16px 0 6px}
+.goal{position:absolute;top:112px;left:16px;right:16px;z-index:3;display:none;align-items:center;gap:8px;font-size:11px;font-weight:700;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.35)}.goal.on{display:flex}
+.trk{flex:1;height:8px;border-radius:99px;background:rgba(255,255,255,.4);overflow:hidden}.trk i{display:block;height:100%;background:var(--acc);border-radius:99px;transition:width .5s}
+.shout{position:absolute;top:150px;left:20px;right:20px;z-index:4;text-align:center;padding:10px 12px;border-radius:16px;background:rgba(255,255,255,.9);color:#2b2528;font-weight:700;font-size:13px;opacity:0;transform:translateY(-8px);transition:all .3s;pointer-events:none}.shout.on{opacity:1;transform:none}
+#lead div{display:flex;justify-content:space-between;max-width:260px;padding:3px 0;color:var(--ink)}
+.shelf{position:absolute;left:12px;right:12px;bottom:66px;z-index:3;display:none}.shelf.on{display:block}
+.card{display:flex;align-items:center;gap:10px;padding:8px;border-radius:18px;background:rgba(255,255,255,.86);color:#2b2528;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);font-size:12px;line-height:1.3}
+.th{width:44px;height:44px;border-radius:12px;background:#eee;object-fit:cover;flex:none;display:flex;align-items:center;justify-content:center;font-size:20px}
+.card b{display:block;font-size:13px}.card .go{margin-left:auto;background:var(--acc);color:#2b2528;font-weight:700;border-radius:999px;padding:7px 12px;flex:none}.card small{color:#6d6368}
+.prow{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:14px;padding:8px;margin-top:8px}.prow .t{flex:1;min-width:0}.prow .t div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mute{color:var(--mute);font-size:12px}
+.fld{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}.fld input[type=text]{max-width:none;flex:1 1 150px}
+.xc{border:1px solid var(--line);border-radius:16px;padding:12px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px;width:136px}.xc b{font-size:14px}.xc span{color:var(--mute);font-size:13px}.xi svg{width:64px;height:64px}
+.xstk{position:absolute;bottom:140px;z-index:5;display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none;animation:xpop 4s ease-out forwards;transform-origin:center bottom}
+.xstk svg{filter:drop-shadow(0 4px 8px rgba(0,0,0,.25))}
+.xl{background:rgba(255,255,255,.92);color:#2b2528;font-size:11px;font-weight:700;padding:3px 10px;border-radius:99px;white-space:nowrap}
+@keyframes xpop{0%{opacity:0;transform:scale(.3)}12%{opacity:1;transform:scale(1.15)}22%{transform:scale(1)}85%{opacity:1;transform:translateY(-50px)}100%{opacity:0;transform:translateY(-80px)}}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.01s!important;transition-duration:.01s!important}}
+.timer{position:absolute;top:130px;right:16px;z-index:3;display:none;font-size:11px;font-weight:700;color:#fff;background:rgba(0,0,0,.35);padding:2px 8px;border-radius:99px}.timer.on{display:block}
+.chip:disabled{opacity:.45;cursor:not-allowed}
+.camv{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none}
+.has-cam .camv{display:block}.has-cam .cam{display:none}
+.camimg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none}
+.has-photo .camimg{display:block}.has-photo .cam{display:none}
+.camrow{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:12px}
+.right{display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap}
+#fPanels{flex:1 1 360px;min-width:0}#fViewer{flex:0 0 390px;max-width:100%}
+main.multi{max-width:1500px}
+.devlabel{font-size:12px;font-weight:700;color:var(--mute);margin:0 0 8px 4px;text-align:center}.right .devlabel{text-align:left}.devlabel:empty{display:none}
+.paircard{display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-top:14px;padding:14px;border:1px solid var(--line);border-radius:16px}
+.paircard .t{flex:1 1 200px;min-width:0}.paircard a{color:var(--ink);font-weight:600;word-break:break-all}
+.qr svg{display:block;border-radius:12px;border:1px solid var(--line)}
+#pairmodal{position:fixed;inset:0;z-index:50;background:rgba(20,15,18,.5);display:flex;align-items:center;justify-content:center;padding:16px}#pairmodal[hidden]{display:none}
+.pmcard{background:#fff;color:#2b2528;border-radius:26px;width:100%;max-width:340px;padding:22px;display:flex;flex-direction:column;gap:10px;color-scheme:light}.pmcard h3{margin:0;font-size:18px}.pmcard .vm{color:#6b6065;font-size:13px}
+.pmopt{text-align:left;border:1.5px solid #e8e1de;border-radius:16px;background:#fff;color:#2b2528;font:inherit;padding:14px;display:flex;flex-direction:column;gap:2px;cursor:pointer}.pmopt:hover:not(:disabled){border-color:var(--acc)}.pmopt:disabled{opacity:.5;cursor:not-allowed}.pmopt span{font-size:13px;color:#6b6065}
+.pmcard .chip{color:#2b2528;background:#fff}
+[hidden]{display:none!important}
+</style>
+<style>
+#viewer{--va:#f0b0c6;width:100%;max-width:390px;height:720px;box-sizing:border-box;margin:0 auto;background:#f6f3f1;color:#2b2528;border:1px solid var(--line);border-radius:28px;padding:16px;display:flex;flex-direction:column;gap:12px;color-scheme:light}
+
+.vhead{display:flex;align-items:center;gap:10px}.vhead>div:nth-child(2){flex:1}.vhead small{display:block;color:#6b6065;font-size:13px}
+.vav{width:40px;height:40px;border-radius:50%;background:var(--va);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px}
+.vchip{font-size:12px;font-weight:700;padding:6px 10px;border-radius:999px;background:#2b2528;color:#fff}
+.vgoal{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700}.vtrk{flex:1;height:8px;border-radius:99px;background:#e4dcd8;overflow:hidden}.vtrk i{display:block;height:100%;background:var(--va);transition:width .5s}
+.vtabs{display:flex;gap:6px;background:#fff;border-radius:18px;padding:5px}
+.vtab{flex:1;height:44px;border:0;border-radius:13px;background:transparent;color:#6b6065;font:inherit;font-weight:600;cursor:pointer}.vtab[aria-pressed=true]{background:color-mix(in srgb,var(--va) 28%,#fff);color:#2b2528;font-weight:700}
+.vcard{background:#fff;border-radius:18px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.vm{margin:0;color:#6b6065;font-size:13px}.vc{text-align:center}
+.vgrid{display:flex;gap:8px;flex-wrap:wrap}
+.vopt{flex:1 1 90px;border:1.5px solid #e8e1de;border-radius:16px;background:#fff;color:#2b2528;font:inherit;padding:12px 6px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer}
+.vopt[aria-pressed=true]{border:2px solid var(--va);background:color-mix(in srgb,var(--va) 24%,#fff)}.vopt:disabled{opacity:.45;cursor:not-allowed}
+.vsm{flex-direction:row;justify-content:center;padding:12px 4px;font-weight:600;font-size:14px}
+.vim svg{width:56px;height:56px}
+.vpay{display:flex;gap:8px}
+.vbig{height:54px;border:0;border-radius:16px;background:var(--va);color:#2b2528;font:inherit;font-weight:700;font-size:16px;cursor:pointer}
+.vrow{display:flex;justify-content:space-between;font-size:14px}
+#viewer label{font-size:13px;font-weight:600}
+#viewer input[type=text]{background:#f6f3f1;color:#2b2528;max-width:none;height:46px}
+#viewer button:focus-visible{outline:2px solid #2b2528;outline-offset:2px}
+.vhead,.vgoal,.vtabs{flex:none}
+.vscroll{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:12px;scrollbar-width:thin}
+.vscroll>*{flex:none}
+.vscroll .vbig{position:sticky;bottom:0;box-shadow:0 -10px 10px -4px #f6f3f1}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<header>
+  <div><h1>Live control panel</h1><div class="live"><span class="dot"></span>Prototype</div></div>
+  <div class="seg" id="views" role="group" aria-label="View"></div>
+  <div class="wallet" id="wallet" role="status"></div>
+</header>
+<main>
+  <div class="stage">
+    <div class="devlabel" id="lblStage"></div>
+    <div class="phone" id="phone">
+      <div class="cam"></div><video id="camv" class="camv" autoplay muted playsinline></video><img id="camimg" class="camimg" alt=""><div class="tint"></div><div class="notch"></div>
+      <div class="pill" id="pill"><span id="l1"></span><span id="badge">LIVE</span><span id="l2"></span></div>
+      <div class="charm" id="charm"></div>
+      <canvas id="gcv" width="280" height="540"></canvas>
+      <div class="goal" id="goal"><span id="glv"></span><div class="trk"><i id="gfill"></i></div><span id="gnum"></span></div>
+      <div class="timer" id="rtime"></div>
+      <div class="shout" id="shout"></div>
+      <div class="shelf" id="shelf"></div>
+      <div class="bar"></div>
+      <div class="scene fade" id="scene"></div>
+    </div>
+    <div class="camrow"><button class="chip" id="cambtn" aria-pressed="false">Use my camera</button><button class="chip" id="photobtn" aria-pressed="false">Use a photo</button><input type="file" id="campick" accept="image/*" capture="user" hidden></div>
+    <div class="toast" id="toast" role="status">Tap anything on the right to try it.</div>
+  </div>
+  <div class="right">
+    <div class="frame" id="fPanels"><div class="devlabel" id="lblPanels"></div><div id="panels"></div></div>
+    <div class="frame" id="fViewer" hidden><div class="devlabel" id="lblViewer"></div><div id="viewer"></div></div>
+  </div>
+</main>
+<div id="pairmodal" hidden></div>
+<script>
+(function(){const __m={"src/main.js":function(__x,__r){
+const {themes} = __r("src/generated/registry.js");
+const {state} = __r("src/core/state.js");
+const {planOf} = __r("src/core/plans.js");
+const {setView, applyLayout} = __r("src/core/view.js");
+const {on} = __r("src/core/bus.js");
+const {h, $, chip} = __r("src/core/ui.js");
+const {applyTheme, updateGoal} = __r("src/core/stage.js");
+__r("src/core/gameHost.js");
+const {PANELS} = __r("src/panels/index.js");
+const {mountViewer} = __r("src/viewer/viewer.js");
+const {toggleCamera, togglePhoto, setPhoto} = __r("src/core/camera.js");
+
+// Sections can be folded to save space. The choice is remembered, also between visits when storage is available.
+let collapsed = new Set();
+try { collapsed = new Set(JSON.parse(localStorage.getItem("collapsed") || "[]")); } catch { /* storage unavailable */ }
+const remember = () => { try { localStorage.setItem("collapsed", JSON.stringify([...collapsed])); } catch { /* ignore */ } };
+const fold = (sec, btn, title, shut) => { sec.classList.toggle("collapsed", shut); btn.setAttribute("aria-expanded", String(!shut)); shut ? collapsed.add(title) : collapsed.delete(title); };
+const build = () => {
+  const secs = PANELS.map((p) => {
+    const body = h("div"), sec = h("section", { class: collapsed.has(p.title) ? "collapsed" : "" });
+    p.render(body);
+    const btn = h("button", { class: "fold", "aria-expanded": String(!collapsed.has(p.title)), onclick: () => { fold(sec, btn, p.title, !sec.classList.contains("collapsed")); remember(); syncAll(); } }, p.title);
+    sec.append(h("h2", {}, btn), h("div", { class: "sbody" }, h("p", { class: "hint" }, p.hint), body));
+    return { p, sec, btn };
+  });
+  const all = chip("");
+  const syncAll = () => { const shut = secs.every((s) => s.sec.classList.contains("collapsed")); all.lastChild.textContent = shut ? "Expand all" : "Collapse all"; all.onclick = () => { secs.forEach((s) => fold(s.sec, s.btn, s.p.title, !shut)); remember(); syncAll(); }; };
+  all.append(""); syncAll();
+  $("panels").replaceChildren(h("div", { class: "foldbar" }, all), ...secs.map((s) => s.sec));
+};
+const drawWallet = () => { const p = planOf(state.plan); $("wallet").textContent = `${p.name} plan${state.plan === "free" ? "" : ` (${state.planDays} days left)`}, ${state.wallet.streamer} points`; };
+const drawViews = () => $("views").replaceChildren(...[["streamer", "Streamer controls"], ["viewer", "Viewer page"]].map(([k, l]) => h("button", {
+  "aria-pressed": String(state.view === k),
+  onclick: () => setView(k)
+}, l)));
+// "unlock" fires whenever the streamer's points or unlocked items change.
+on("view", drawViews);
+on("unlock", () => { drawWallet(); build(); updateGoal(); });
+
+state.theme = themes[0].id; applyTheme(themes[0]);
+drawWallet(); build(); updateGoal();
+mountViewer($("viewer")); drawViews(); applyLayout();
+$("cambtn").onclick = toggleCamera;
+$("photobtn").onclick = togglePhoto;
+$("campick").onchange = (e) => { setPhoto(e.target.files[0]); e.target.value = ""; };
+
+Object.assign(__x,{});
+},
+"src/generated/registry.js":function(__x,__r){
+// AUTO-GENERATED by scripts/build-registry.mjs. Do not edit. Run: npm run build
+const g_dart = __r("content/games/dart/game.js").default;
+const g_jump = __r("content/games/jump/game.js").default;
+const g_dodge = __r("content/games/dodge/game.js").default;
+
+const plans = [
+  {"id":"free","type":"plans","name":"Free","order":1,"points":0,"devices":1,"perks":["1 theme","5 stickers","Basic overlay"]},
+  {"id":"pro","type":"plans","name":"Pro","order":2,"points":600,"devices":1,"perks":["All 5 themes","Full sticker library","Sound effects","Scenes and transitions","Premium stickers","Game pack"]},
+  {"id":"studio","type":"plans","name":"Studio","order":3,"points":1500,"devices":3,"perks":["Everything in Pro","Product showcase","Multi-device: up to 3 devices"]}
+];
+
+const themes = [
+  {"id":"clean-girl-glass","type":"themes","name":"Clean Girl Glass","order":1,"accent":"#cfd6d2","pill":"rgba(255,255,255,.28)","border":"rgba(255,255,255,.8)","text":"#fff","wash":"#d9dedb","scene":"rgba(205,212,208,.85)","charm":"","sideCharm":"","cost":0,"tier":"free"},
+  {"id":"sheer-blush","type":"themes","name":"Sheer Blush","order":2,"accent":"#f0b0c6","pill":"rgba(244,176,198,.55)","border":"rgba(255,255,255,.5)","text":"#fff","wash":"#f2c4d2","scene":"rgba(240,176,198,.88)","charm":"🎀","sideCharm":"","cost":150,"tier":"pro"},
+  {"id":"matcha-mist","type":"themes","name":"Matcha Mist","order":3,"accent":"#8baa7f","pill":"rgba(139,170,127,.6)","border":"rgba(255,255,255,.4)","text":"#fff","wash":"#b6c9ad","scene":"rgba(128,160,118,.9)","charm":"🌿","sideCharm":"","cost":150,"tier":"pro"},
+  {"id":"cloud-lilac","type":"themes","name":"Cloud Lilac","order":4,"accent":"#b9a6e4","pill":"rgba(190,170,230,.55)","border":"rgba(255,255,255,.5)","text":"#fff","wash":"#c9bde8","scene":"rgba(180,162,224,.9)","charm":"","sideCharm":"✨","cost":150,"tier":"pro"},
+  {"id":"vanilla-pearl","type":"themes","name":"Vanilla Pearl","order":5,"accent":"#e6d5b5","pill":"rgba(240,226,200,.7)","border":"rgba(190,160,120,.6)","text":"#8a6a45","wash":"#eadfca","scene":"rgba(240,228,205,.92)","charm":"","sideCharm":"","cost":150,"tier":"pro"}
+];
+
+const scenes = [
+  {"id":"starting-soon","type":"scenes","name":"Starting soon","order":1,"title":"Starting soon","subtitle":"We’ll begin in a moment","cost":100,"tier":"pro"},
+  {"id":"be-right-back","type":"scenes","name":"Be right back","order":2,"title":"Be right back","subtitle":"Grab a drink, we’ll be back","cost":100,"tier":"pro"},
+  {"id":"thanks-for-watching","type":"scenes","name":"Thanks for watching","order":3,"title":"Thanks for watching","subtitle":"See you next time","cost":100,"tier":"pro"}
+];
+
+const stickers = [
+  {"id":"heart","type":"stickers","name":"Heart","order":1,"emoji":"💖","cost":0,"points":5,"tier":"free"},
+  {"id":"sparkles","type":"stickers","name":"Sparkles","order":2,"emoji":"✨","cost":0,"points":5,"tier":"free"},
+  {"id":"bow","type":"stickers","name":"Bow","order":3,"emoji":"🎀","cost":0,"points":5,"tier":"free"},
+  {"id":"blossom","type":"stickers","name":"Blossom","order":4,"emoji":"🌸","cost":0,"points":5,"tier":"free"},
+  {"id":"fire","type":"stickers","name":"Fire","order":5,"emoji":"🔥","cost":0,"points":5,"tier":"free"},
+  {"id":"hug","type":"stickers","name":"Hug","order":6,"emoji":"🫶","cost":50,"points":5,"tier":"pro"},
+  {"id":"teary","type":"stickers","name":"Teary","order":7,"emoji":"🥹","cost":50,"points":5,"tier":"pro"},
+  {"id":"clap","type":"stickers","name":"Clap","order":8,"emoji":"👏","cost":50,"points":5,"tier":"pro"}
+];
+
+const sounds = [
+  {"id":"pop","type":"sounds","name":"Pop","order":1,"synth":{"wave":"sine","freqs":[520,780],"step":0.12},"cost":60,"tier":"pro"},
+  {"id":"sparkle","type":"sounds","name":"Sparkle","order":2,"synth":{"wave":"triangle","freqs":[1040,1320,1760],"step":0.1},"cost":60,"tier":"pro"},
+  {"id":"ding","type":"sounds","name":"Ding","order":3,"synth":{"wave":"sine","freqs":[880],"step":0.5},"cost":60,"tier":"pro"},
+  {"id":"applause","type":"sounds","name":"Applause","order":4,"synth":{"wave":"sawtooth","freqs":[200,260,180,240,220,300],"step":0.07},"cost":60,"tier":"pro"},
+  {"id":"whoosh","type":"sounds","name":"Whoosh","order":5,"synth":{"wave":"triangle","freqs":[1200,700,300],"step":0.12},"cost":60,"tier":"pro"}
+];
+
+const premiumStickers = [
+  {"id":"blush-bow","type":"premium-stickers","name":"Blush Bow","order":1,"size":64,"seconds":3,"cost":100,"points":50,"tier":"pro","svg":"<svg viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\"><g fill=\"#f4a9c0\" stroke=\"#e07f9f\" stroke-width=\"3\" stroke-linejoin=\"round\"><path d=\"M50 50C30 20 8 28 12 50C8 72 30 80 50 50Z\"/><path d=\"M50 50C70 20 92 28 88 50C92 72 70 80 50 50Z\"/><path d=\"M46 52L30 90L42 85L48 95L53 58Z\" fill=\"#f8c4d4\"/><path d=\"M54 52L70 90L58 85L52 95L47 58Z\" fill=\"#f8c4d4\"/><circle cx=\"50\" cy=\"50\" r=\"9\" fill=\"#f08bab\"/></g></svg>"},
+  {"id":"cloud-hug","type":"premium-stickers","name":"Cloud Hug","order":2,"size":84,"seconds":4.2,"cost":200,"points":50,"tier":"pro","svg":"<svg viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M28 76C10 76 6 54 24 50C22 30 44 24 52 38C60 26 86 32 80 52C96 56 92 76 74 76Z\" fill=\"#e6defa\" stroke=\"#b9a6e4\" stroke-width=\"3\" stroke-linejoin=\"round\"/><circle cx=\"40\" cy=\"58\" r=\"3.5\" fill=\"#5b4a7a\"/><circle cx=\"60\" cy=\"58\" r=\"3.5\" fill=\"#5b4a7a\"/><circle cx=\"33\" cy=\"65\" r=\"4\" fill=\"#f6b9cd\"/><circle cx=\"67\" cy=\"65\" r=\"4\" fill=\"#f6b9cd\"/><path d=\"M45 64Q50 70 55 64\" fill=\"none\" stroke=\"#5b4a7a\" stroke-width=\"3\" stroke-linecap=\"round\"/></svg>"},
+  {"id":"pearl-crown","type":"premium-stickers","name":"Pearl Crown","order":3,"size":110,"seconds":5.4,"cost":300,"points":50,"tier":"pro","svg":"<svg viewBox=\"0 0 100 100\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M18 72L12 36L34 52L50 26L66 52L88 36L82 72Z\" fill=\"#f3e3c0\" stroke=\"#c9a66b\" stroke-width=\"3\" stroke-linejoin=\"round\"/><rect x=\"18\" y=\"70\" width=\"64\" height=\"12\" rx=\"4\" fill=\"#e6cf9f\" stroke=\"#c9a66b\" stroke-width=\"3\"/><g fill=\"#fff\" stroke=\"#c9a66b\" stroke-width=\"2.5\"><circle cx=\"12\" cy=\"33\" r=\"6\"/><circle cx=\"50\" cy=\"22\" r=\"6\"/><circle cx=\"88\" cy=\"33\" r=\"6\"/></g><path d=\"M50 46l3 7 7 1-5 5 1 7-6-4-6 4 1-7-5-5 7-1Z\" fill=\"#fff\" stroke=\"#c9a66b\" stroke-width=\"2\" stroke-linejoin=\"round\"/></svg>"}
+];
+
+const games = [
+  {...{"id":"dart","type":"games","name":"Dart","order":1,"tip":"Runs by itself. Each viewer dart lands on the board and adds points.","cost":200,"tier":"pro"}, ...g_dart},
+  {...{"id":"jump","type":"games","name":"Jump","order":2,"tip":"Tap Jump, or press Space, to hop over cacti.","cost":200,"tier":"pro"}, ...g_jump},
+  {...{"id":"dodge","type":"games","name":"Dodge","order":3,"tip":"Use the move buttons, or the arrow keys, to dodge rocks.","cost":200,"tier":"pro"}, ...g_dodge}
+];
+
+const pointPacks = [
+  {"id":"rm2","type":"point-packs","name":"RM 2 pack","order":1,"rm":2,"points":100},
+  {"id":"rm5","type":"point-packs","name":"RM 5 pack","order":2,"rm":5,"points":300},
+  {"id":"rm10","type":"point-packs","name":"RM 10 pack","order":3,"rm":10,"points":1000},
+  {"id":"rm20","type":"point-packs","name":"RM 20 pack","order":4,"rm":20,"points":3000},
+  {"id":"rm50","type":"point-packs","name":"RM 50 pack","order":5,"rm":50,"points":10000}
+];
+
+
+Object.assign(__x,{plans,themes,scenes,stickers,sounds,premiumStickers,games,pointPacks});
+},
+"content/games/dart/game.js":function(__x,__r){
+// Game contract: see content/games/README.md. g = game context from src/core/gameHost.js
+const BX = 212, BY = 330;
+const toss = (g, spread) => g.s.fly.push({ tx: BX + (Math.random() + Math.random() - 1) * spread, ty: BY + (Math.random() + Math.random() - 1) * spread, t: 0 });
+
+__x.default = {
+  init(g) { g.s = { darts: [], fly: [] }; },
+  frame(g) {
+    const { cx, s } = g;
+    [[46, "rgba(255,255,255,.85)"], [34, "rgba(240,176,198,.9)"], [24, "rgba(255,255,255,.9)"], [8, "#e25c6b"]].forEach(([r, c]) => { cx.beginPath(); cx.arc(BX, BY, r, 0, 7); cx.fillStyle = c; cx.fill(); });
+    s.darts.forEach((d) => g.em("📍", d.x, d.y - 6, 14));
+    s.fly = s.fly.filter((f) => {
+      f.t += 0.045;
+      const x = 60 + (f.tx - 60) * f.t, y = 520 + (f.ty - 520) * f.t - Math.sin(f.t * Math.PI) * 70;
+      if (f.t < 1) { g.em("📍", x, y, 14); return true; }
+      const d = Math.hypot(f.tx - BX, f.ty - BY), p = d < 8 ? 30 : d < 24 ? 15 : d < 46 ? 5 : 0;
+      s.darts.push({ x: f.tx, y: f.ty }); if (s.darts.length > 10) s.darts.shift();
+      if (p) g.addPoints(p);
+      if (p >= 30) g.shout("🎯 Bullseye! Challenge: " + g.challenge());
+      else if (p === 15) g.shout("Nice throw! +15 points");
+      else g.toast(p ? "Dart hit, +" + p + " points" : "Dart missed the board");
+      return false;
+    });
+  },
+  controls: [],
+  boosts: [
+    { label: "📍 Dart", points: 25, run: (g) => toss(g, 50) },
+    { label: "📍📍 Double dart", points: 60, run: (g) => { toss(g, 35); setTimeout(() => toss(g, 35), 250); } }
+  ]
+};
+
+Object.assign(__x,{});
+},
+"content/games/jump/game.js":function(__x,__r){
+const hop = (g) => { if (!g.s.y) g.s.vy = 11; };
+__x.default = {
+  init(g) { g.s = { y: 0, vy: 0, ob: [], boost: 0, shield: 0, inv: 0 }; },
+  frame(g) {
+    const { cx, W, s } = g;
+    cx.fillStyle = "rgba(255,255,255,.6)"; cx.fillRect(0, 470, W, 3);
+    s.vy -= 0.7; s.y = Math.max(0, s.y + s.vy); if (!s.y) s.vy = 0;
+    if (g.T % 90 === 0) s.ob.push({ x: 300 });
+    const sp = 3.2 * (s.boost > 0 ? 1.8 : 1); s.boost--; s.shield--; if (s.inv > 0) s.inv--;
+    s.ob = s.ob.filter((o) => {
+      o.x -= sp; g.em("🌵", o.x, 452, 30);
+      if (!o.p && o.x < 30) { o.p = 1; g.addPoints(2); }
+      if (!o.p && Math.abs(o.x - 60) < 20 && s.y < 26 && s.shield <= 0 && s.inv <= 0) { s.inv = 60; g.shout("Crash! Challenge: " + g.challenge()); return false; }
+      return o.x > -20;
+    });
+    if (!(s.inv > 0 && g.T % 6 < 3)) {
+      g.em("🐰", 60, 454 - s.y, 34);
+      if (s.shield > 0) { cx.beginPath(); cx.arc(60, 452 - s.y, 26, 0, 7); cx.strokeStyle = "rgba(120,200,255,.9)"; cx.lineWidth = 3; cx.stroke(); }
+    }
+  },
+  onKey(g, e) { if (e.code === "Space" || e.code === "ArrowUp") { e.preventDefault(); hop(g); } },
+  controls: [{ label: "Jump", run: hop }],
+  boosts: [
+    { label: "🌵 Hurdle", points: 25, run: (g) => g.s.ob.push({ x: 300 }) },
+    { label: "⚡ Speed burst", points: 75, run: (g) => { g.s.boost = 240; } },
+    { label: "🛡️ Shield", points: 40, run: (g) => { g.s.shield = 300; } }
+  ]
+};
+
+Object.assign(__x,{});
+},
+"content/games/dodge/game.js":function(__x,__r){
+const move = (g, d) => { if (g.s.frz > 0) return g.toast("Frozen by a viewer!"); g.s.px = Math.max(20, Math.min(260, g.s.px + d)); };
+__x.default = {
+  init(g) { g.s = { px: 140, ob: [], frz: 0 }; },
+  frame(g) {
+    const { s } = g;
+    if (g.T % 45 === 0) s.ob.push({ x: g.rnd(20, 260), y: -20, v: 3 });
+    if (s.frz > 0) s.frz--;
+    s.ob = s.ob.filter((o) => {
+      o.y += o.v; g.em("☄️", o.x, o.y, 28);
+      if (Math.abs(o.x - s.px) < 22 && Math.abs(o.y - 490) < 24) { g.shout("Ouch! Challenge: " + g.challenge()); return false; }
+      if (o.y > g.H) { g.addPoints(1); return false; }
+      return true;
+    });
+    g.em("🐱", s.px, 490, 34); if (s.frz > 0) g.em("🧊", s.px, 490, 40);
+  },
+  onKey(g, e) { if (e.code === "ArrowLeft") move(g, -35); if (e.code === "ArrowRight") move(g, 35); },
+  controls: [{ label: "Move left", run: (g) => move(g, -35) }, { label: "Move right", run: (g) => move(g, 35) }],
+  boosts: [
+    { label: "☄️ Extra rock", points: 25, run: (g) => g.s.ob.push({ x: g.rnd(20, 260), y: -20, v: 3.5 }) },
+    { label: "🌊 Fast wave", points: 75, run: (g) => { for (let i = 0; i < 5; i++) g.s.ob.push({ x: g.rnd(20, 260), y: -i * 40, v: 7 }); } },
+    { label: "🧊 Freeze", points: 100, run: (g) => { g.s.frz = 180; } }
+  ]
+};
+
+Object.assign(__x,{});
+},
+"src/core/state.js":function(__x,__r){
+const {FEATURES} = __r("src/core/features.js");
+const {SINGLE_UNLOCKS} = __r("src/core/config.js");
+const {can} = __r("src/core/plans.js");
+const {emit} = __r("src/core/bus.js");
+const {toast, cap} = __r("src/core/ui.js");
+const state = { view: "streamer", plan: "free", planDays: 0, autoRenew: true, nextPlan: null, devices: [], pairing: null, viewerStart: false, theme: null, trans: "fade", scene: null, game: null, badge: "LIVE", mood: 0, products: [], featured: -1, points: 0, goal: 100, level: 1, board: {}, wallet: { streamer: 0, viewer: 0 }, unlocked: new Set(), pending: null };
+const feat = (k) => ({ id: k, ...FEATURES[k] });
+const keyOf = (item) => (item.type ? `${item.type}:${item.id}` : `feature:${item.id}`);
+const allowed = (tier) => can(state.plan, tier);
+const isUnlocked = (item) => allowed(item.tier) || state.unlocked.has(keyOf(item));
+const hasAddon = (k) => isUnlocked(feat(k));
+// True if the streamer may use `item`. Otherwise says which plan includes it.
+function gate(item, silent) {
+  if (isUnlocked(item)) return true;
+  if (silent) return false;
+  if (!SINGLE_UNLOCKS || !item.cost) { toast(`${item.name} is part of the ${cap(item.tier)} plan. Choose a plan above.`); return false; }
+  const k = keyOf(item), p = state.pending; // optional single unlock: tap twice
+  if (p && p.k === k && Date.now() - p.t < 6000) {
+    state.pending = null;
+    if (state.wallet.streamer < item.cost) { toast(`You need ${item.cost} points and have ${state.wallet.streamer}.`); return false; }
+    state.wallet.streamer -= item.cost; state.unlocked.add(k); emit("unlock"); toast(`${item.name} unlocked.`);
+    return true;
+  }
+  state.pending = { k, t: Date.now() };
+  toast(`${item.name} costs ${item.cost} points. Tap again to unlock it.`);
+  return false;
+}
+
+Object.assign(__x,{state,feat,keyOf,allowed,isUnlocked,hasAddon,gate});
+},
+"src/core/features.js":function(__x,__r){
+// Features that are not content items but can still be locked. tier = lowest plan that includes it.
+const FEATURES = {
+  transitions: { name: "Transitions", tier: "pro", cost: 100 },
+  games: { name: "Game pack", tier: "pro", cost: 300 },
+  showcase: { name: "Product showcase", tier: "studio", cost: 500 },
+  multiDevice: { name: "Multi-device", tier: "studio", cost: 800 }
+};
+
+Object.assign(__x,{FEATURES});
+},
+"src/core/config.js":function(__x,__r){
+// Tweakable settings that are not content. Costs and point prices of content live in content/*/ manifests.
+const DEMO_VIEWERS = ["Aina", "Mei", "Daniel", "Siti", "Kai"];
+const CHALLENGES = ["Drink some water", "Dance for 10 seconds", "Say hi in 3 languages", "Show your outfit", "Pick a viewer’s song"];
+const ROUND_SECONDS = 60; // every game round lasts this long unless game.json sets "seconds"
+// Every game round lasts this long and cannot be interrupted. A game can override it with "seconds" in game.json.
+const GAME_SECONDS = 60;
+// When true, a locked item can also be bought once with its own `cost` in points, outside the monthly plan.
+const SINGLE_UNLOCKS = false;
+// Viewers can only buy point packs priced up to this many RM. Streamers can buy every pack.
+const VIEWER_MAX_RM = 10;
+// What a viewer pays to start a game round (a game can override it with "startPoints" in game.json).
+const GAME_START_POINTS = 100;
+// Smallest number of points a viewer can spend to take part in a game. Lower prices are raised to this.
+const MIN_GAME_POINTS = 25;
+
+Object.assign(__x,{DEMO_VIEWERS,CHALLENGES,ROUND_SECONDS,GAME_SECONDS,SINGLE_UNLOCKS,VIEWER_MAX_RM,GAME_START_POINTS,MIN_GAME_POINTS});
+},
+"src/core/plans.js":function(__x,__r){
+const {plans} = __r("src/generated/registry.js");
+// Plans come from content/plans/. Their order decides which plan is "higher".
+const rank = (id) => plans.findIndex((p) => p.id === id);
+const can = (plan, tier = "free") => rank(plan) >= rank(tier);
+const planOf = (id) => plans.find((p) => p.id === id);
+
+Object.assign(__x,{rank,can,planOf});
+},
+"src/core/bus.js":function(__x,__r){
+const m = new Map();
+const on = (e, f) => (m.get(e) || m.set(e, []).get(e)).push(f);
+const emit = (e, d) => (m.get(e) || []).forEach((f) => f(d));
+
+Object.assign(__x,{on,emit});
+},
+"src/core/ui.js":function(__x,__r){
+const $ = (id) => document.getElementById(id);
+function h(tag, props = {}, ...kids) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(props)) {
+    if (k === "class") e.className = v;
+    else if (k === "style") e.style.cssText = v;
+    else if (k.startsWith("on")) e[k] = v;
+    else e.setAttribute(k, v);
+  }
+  e.append(...kids);
+  return e;
+}
+const row = (...k) => h("div", { class: "row" }, ...k);
+const toast = (m) => { $("toast").textContent = m; };
+const rm = (n) => "RM " + (Number.isInteger(n) ? n : n.toFixed(2));
+const pts = (n) => n + " pts";
+const cap = (s) => s[0].toUpperCase() + s.slice(1);
+function chip(label, { lead, pressed, locked, cost, disabled, onclick } = {}) {
+  const b = h("button", { class: "chip" + (locked ? " locked" : ""), onclick });
+  if (lead) b.append(lead);
+  b.append(label);
+  if (pressed !== undefined) b.setAttribute("aria-pressed", pressed);
+  if (disabled) b.disabled = true;
+  if (locked) b.dataset.cost = cost;
+  return b;
+}
+
+Object.assign(__x,{$,h,row,toast,rm,pts,cap,chip});
+},
+"src/core/view.js":function(__x,__r){
+// Decides which screens are visible. One device: toggle between controls and the viewer page.
+// With paired devices every screen gets its own labelled frame: Device 1 = stream view, then controls and/or viewer page.
+const {state} = __r("src/core/state.js");
+const {$} = __r("src/core/ui.js");
+const {emit} = __r("src/core/bus.js");
+const has = (r) => state.devices.some((d) => d.role === r);
+const num = (r) => state.devices.findIndex((d) => d.role === r) + 2;
+function applyLayout() {
+  const n = state.devices.length, c = has("control"), v = has("viewer");
+  $("fPanels").hidden = n === 0 ? state.view !== "streamer" : false;
+  $("fViewer").hidden = n === 0 ? state.view !== "viewer" : !v;
+  $("views").hidden = n > 0;
+  document.querySelector("main").classList.toggle("multi", n > 0);
+  $("lblStage").textContent = n ? "Device 1: Stream view" : "";
+  $("lblPanels").textContent = n ? (c ? `Device ${num("control")}: Streamer controls` : "Device 1: Streamer controls (shared with the stream view)") : "";
+  $("lblViewer").textContent = v ? `Device ${num("viewer")}: Viewer page` : "";
+}
+function setView(k) { state.view = k; applyLayout(); emit("view"); }
+
+Object.assign(__x,{applyLayout,setView});
+},
+"src/core/stage.js":function(__x,__r){
+const {$, h} = __r("src/core/ui.js");
+const {state, hasAddon} = __r("src/core/state.js");
+let st;
+function applyTheme(t) {
+  const s = document.documentElement.style;
+  s.setProperty("--pill", t.pill); s.setProperty("--bd", t.border); s.setProperty("--tx", t.text);
+  s.setProperty("--t1", t.wash); s.setProperty("--t2", t.scene); s.setProperty("--acc", t.accent);
+  $("charm").textContent = t.charm || ""; $("l1").textContent = $("l2").textContent = t.sideCharm || "";
+}
+function shout(text) {
+  const e = $("shout"); e.textContent = text; e.classList.add("on");
+  clearTimeout(st); st = setTimeout(() => e.classList.remove("on"), 2600);
+}
+function floatEmoji(emoji) {
+  const s = h("div", { class: "stk", style: `left:${15 + Math.random() * 60}%` }, emoji);
+  $("phone").append(s); setTimeout(() => s.remove(), 2700);
+}
+// Trusted SVG only: validated by scripts/validate.mjs (no scripts or event handlers).
+function floatExclusive(item, who) {
+  const d = h("div", { class: "xstk", style: `left:${18 + Math.random() * 34}%;animation-duration:${item.seconds}s` });
+  d.innerHTML = item.svg;
+  d.firstChild.style.width = d.firstChild.style.height = item.size + "px";
+  d.append(h("div", { class: "xl" }, `${who} sent ${item.name}`));
+  $("phone").append(d); setTimeout(() => d.remove(), item.seconds * 1000 + 200);
+}
+function showScene(scene, trans) {
+  const e = $("scene");
+  if (!scene) return e.classList.remove("on");
+  e.className = "scene " + trans; void e.offsetWidth;
+  e.replaceChildren(h("div", {}, scene.title), h("small", {}, scene.subtitle));
+  requestAnimationFrame(() => e.classList.add("on"));
+}
+function updateGoal() {
+  $("goal").classList.toggle("on", hasAddon("games"));
+  $("glv").textContent = "Lv " + state.level;
+  $("gfill").style.width = Math.min(100, state.points / state.goal * 100) + "%";
+  $("gnum").textContent = state.points + "/" + state.goal;
+}
+
+Object.assign(__x,{applyTheme,shout,floatEmoji,floatExclusive,showScene,updateGoal});
+},
+"src/panels/index.js":function(__x,__r){
+// Panels render content types found in the registry. Adding items to content/ needs NO change here.
+// Add a line here only when you introduce a brand new kind of feature.
+const themes = __r("src/panels/themes.js").default;
+const scenes = __r("src/panels/scenes.js").default;
+const stickers = __r("src/panels/stickers.js").default;
+const sounds = __r("src/panels/sounds.js").default;
+const premium = __r("src/panels/premium.js").default;
+const points = __r("src/panels/points.js").default;
+const plan = __r("src/panels/plan.js").default;
+const devices = __r("src/panels/devices.js").default;
+const games = __r("src/panels/games.js").default;
+const showcase = __r("src/panels/showcase.js").default;
+const customize = __r("src/panels/customize.js").default;
+const PANELS = [plan, points, themes, scenes, stickers, sounds, premium, games, showcase, devices, customize];
+
+Object.assign(__x,{PANELS});
+},
+"src/panels/themes.js":function(__x,__r){
+const {lockLabel} = __r("src/core/lock.js");
+const {themes} = __r("src/generated/registry.js");
+const {state, gate} = __r("src/core/state.js");
+const {chip, h, row, toast} = __r("src/core/ui.js");
+const {applyTheme} = __r("src/core/stage.js");
+const {emit} = __r("src/core/bus.js");
+__x.default = { title: "Theme", hint: "Switch the look of your overlay while live.", render(el) {
+  const draw = () => el.replaceChildren(row(...themes.map((t) => chip(t.name, {
+    lead: h("span", { class: "sw", style: "background:" + t.accent }), pressed: state.theme === t.id, locked: !gate(t, true), cost: lockLabel(t),
+    onclick: () => { if (!gate(t)) return; state.theme = t.id; applyTheme(t); emit("theme"); draw(); toast("Theme: " + t.name); }
+  }))));
+  draw();
+} };
+
+Object.assign(__x,{});
+},
+"src/core/lock.js":function(__x,__r){
+const {SINGLE_UNLOCKS} = __r("src/core/config.js");
+const {cap} = __r("src/core/ui.js");
+// The small badge shown on a locked item.
+const lockLabel = (item) => (SINGLE_UNLOCKS && item.cost ? item.cost + " pts" : cap(item.tier || "free"));
+
+Object.assign(__x,{lockLabel});
+},
+"src/panels/scenes.js":function(__x,__r){
+const {lockLabel} = __r("src/core/lock.js");
+const {scenes} = __r("src/generated/registry.js");
+const {state, gate, feat} = __r("src/core/state.js");
+const {chip, row, toast} = __r("src/core/ui.js");
+const {showScene} = __r("src/core/stage.js");
+const TRANS = [["fade", "Fade"], ["slide", "Slide up"], ["blur", "Blur"]], T = feat("transitions");
+__x.default = { title: "Scenes and transitions", hint: "Show a full screen, then go back to your camera.", render(el) {
+  const draw = () => el.replaceChildren(
+    row(...TRANS.map(([k, l]) => chip(l, { pressed: state.trans === k, locked: !gate(T, true), cost: lockLabel(T), onclick: () => { if (!gate(T)) return; state.trans = k; draw(); toast("Transition: " + l); } }))),
+    row(...scenes.map((s) => chip(s.name, { pressed: state.scene === s.id, locked: !gate(s, true), cost: lockLabel(s), onclick: () => {
+      if (!gate(s)) return;
+      state.scene = state.scene === s.id ? null : s.id;
+      showScene(state.scene && s, state.trans); draw(); toast(state.scene ? `Showing: ${s.name}. Tap again to go back.` : "Back to camera");
+    } }))));
+  draw();
+} };
+
+Object.assign(__x,{});
+},
+"src/panels/stickers.js":function(__x,__r){
+const {lockLabel} = __r("src/core/lock.js");
+const {stickers} = __r("src/generated/registry.js");
+const {gate} = __r("src/core/state.js");
+const {chip, row, toast} = __r("src/core/ui.js");
+const {floatEmoji} = __r("src/core/stage.js");
+__x.default = { title: "Stickers", hint: "Float a sticker up the screen.", render(el) {
+  el.replaceChildren(row(...stickers.map((s) => chip(s.emoji, { locked: !gate(s, true), cost: lockLabel(s), onclick: () => { if (!gate(s)) return; floatEmoji(s.emoji); toast("Sent sticker " + s.emoji); } }))));
+} };
+
+Object.assign(__x,{});
+},
+"src/panels/sounds.js":function(__x,__r){
+const {lockLabel} = __r("src/core/lock.js");
+const {sounds} = __r("src/generated/registry.js");
+const {gate} = __r("src/core/state.js");
+const {chip, row, toast} = __r("src/core/ui.js");
+const {playSound} = __r("src/core/audio.js");
+__x.default = { title: "Sound effects", hint: "Plays through your stream audio. Turn your volume up to hear the preview.", render(el) {
+  el.replaceChildren(row(...sounds.map((s) => chip(s.name, { locked: !gate(s, true), cost: lockLabel(s), onclick: () => { if (!gate(s)) return; toast(playSound(s) ? "Played: " + s.name : "Sound isn’t available in this browser."); } }))));
+} };
+
+Object.assign(__x,{});
+},
+"src/core/audio.js":function(__x,__r){
+let ac;
+function playSound(s) {
+  try {
+    if (s.file) { new Audio(`content/sounds/${s.id}/${s.file}`).play(); return true; }
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    const { wave, freqs, step } = s.synth;
+    freqs.forEach((hz, i) => {
+      const o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime + i * step;
+      o.type = wave; o.frequency.value = hz;
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.15, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + step + 0.15);
+      o.connect(g).connect(ac.destination); o.start(t); o.stop(t + step + 0.2);
+    });
+    return true;
+  } catch { return false; }
+}
+
+Object.assign(__x,{playSound});
+},
+"src/panels/premium.js":function(__x,__r){
+const {premiumStickers} = __r("src/generated/registry.js");
+const {gate, isUnlocked} = __r("src/core/state.js");
+const {chip, h, row, cap} = __r("src/core/ui.js");
+const {floatExclusive} = __r("src/core/stage.js");
+const {simulateViewer} = __r("src/core/economy.js");
+__x.default = { title: "Premium stickers", hint: "Stickers your viewers can gift with points. Included from the Pro plan. Preview plays one on your stream with a made-up viewer.", render(el) {
+  el.replaceChildren(row(...premiumStickers.map((s) => {
+    const card = h("div", { class: "xc" }), im = h("div", { class: "xi" }); im.innerHTML = s.svg;
+    card.append(im, h("b", {}, s.name), h("span", {}, `${s.points} pts per gift`), chip(isUnlocked(s) ? "Preview" : `Part of ${cap(s.tier)}`, { onclick: () => {
+      const was = isUnlocked(s); if (!gate(s)) return;
+      if (was) floatExclusive(s, simulateViewer(s.points, s.name));
+    } }));
+    return card;
+  })));
+} };
+
+Object.assign(__x,{});
+},
+"src/core/economy.js":function(__x,__r){
+// The single seam for points. Viewers spend points from their own wallet; the streamer-side
+// "simulate" helpers use a made-up viewer and charge nothing. Swap spendViewer for a server call later.
+const {state} = __r("src/core/state.js");
+const {emit} = __r("src/core/bus.js");
+const {toast} = __r("src/core/ui.js");
+const {DEMO_VIEWERS} = __r("src/core/config.js");
+const {shout, floatEmoji, updateGoal} = __r("src/core/stage.js");
+const randomOf = (a) => a[Math.floor(Math.random() * a.length)];
+const credit = (who, points, label) => { state.board[who] = (state.board[who] || 0) + points; emit("board"); toast(`${who} sent ${label} (${points} pts).`); return who; };
+function spendViewer(points, label, who) {
+  if (state.wallet.viewer < points) { toast(`Not enough points. You need ${points} and have ${state.wallet.viewer}.`); return null; }
+  state.wallet.viewer -= points; emit("vwallet");
+  return credit(who, points, label);
+}
+const simulateViewer = (points, label) => credit(randomOf(DEMO_VIEWERS), points, label);
+function addPoints(n) {
+  state.points += n;
+  if (state.points >= state.goal) {
+    state.points -= state.goal; state.level++; state.goal += 50;
+    setTimeout(() => shout("Level up! Now level " + state.level + " 🎉"), 900);
+    for (let i = 0; i < 5; i++) setTimeout(() => floatEmoji("🎉"), i * 150);
+  }
+  updateGoal(); emit("points");
+}
+function resetGoal() { Object.assign(state, { points: 0, goal: 100, level: 1 }); updateGoal(); emit("points"); }
+const leaderboard = () => Object.entries(state.board).sort((a, b) => b[1] - a[1]).slice(0, 3);
+
+Object.assign(__x,{randomOf,spendViewer,simulateViewer,addPoints,resetGoal,leaderboard});
+},
+"src/panels/points.js":function(__x,__r){
+const {pointPacks} = __r("src/generated/registry.js");
+const {state} = __r("src/core/state.js");
+const {chip, h, row, rm} = __r("src/core/ui.js");
+const {buyPack} = __r("src/core/wallet.js");
+__x.default = { title: "Your points", hint: "Points pay for your monthly plan. Buy a pack here, then choose a plan above.", render(el) {
+  el.replaceChildren(
+    h("label", { class: "lab", style: "margin-top:0" }, `Balance: ${state.wallet.streamer} points`),
+    row(...pointPacks.map((p) => h("div", { class: "xc" }, h("b", {}, rm(p.rm)), h("span", {}, `${p.points} points`), chip("Buy", { onclick: () => buyPack("streamer", p) })))));
+} };
+
+Object.assign(__x,{});
+},
+"src/core/wallet.js":function(__x,__r){
+const {state} = __r("src/core/state.js");
+const {emit} = __r("src/core/bus.js");
+const {toast} = __r("src/core/ui.js");
+// Demo only: no payment is taken. Replace the body with a real payment confirmation later.
+function buyPack(who, pack) {
+  state.wallet[who] += pack.points;
+  emit(who === "streamer" ? "unlock" : "vwallet");
+  toast(`${pack.points} points added (demo, no payment taken).`);
+}
+
+Object.assign(__x,{buyPack});
+},
+"src/panels/plan.js":function(__x,__r){
+const {plans} = __r("src/generated/registry.js");
+const {state} = __r("src/core/state.js");
+const {chip, h, row, cap} = __r("src/core/ui.js");
+const {choose, advanceMonth, toggleAutoRenew} = __r("src/core/subscription.js");
+__x.default = { title: "Your plan", hint: "Plans are paid with points and renew every 30 days. Upgrades start now at the full price. Downgrades start at your next renewal.", render(el) {
+  const cur = state.plan, next = state.nextPlan;
+  el.replaceChildren(
+    row(...plans.map((p) => {
+      const card = h("div", { class: "xc plan", style: "width:170px;align-items:flex-start;text-align:left" });
+      card.append(h("b", {}, p.name), h("span", {}, p.points ? `${p.points} points a month` : "Free"), h("ul", { class: "perks" }, ...p.perks.map((x) => h("li", {}, x))),
+        chip(cur === p.id ? "Current plan" : next === p.id ? "Starts at renewal" : cur !== p.id && plans.findIndex((x) => x.id === p.id) < plans.findIndex((x) => x.id === cur) ? "Switch at renewal" : "Choose", { pressed: cur === p.id || next === p.id, onclick: () => choose(p.id) }));
+      return card;
+    })),
+    cur === "free" ? h("p", { class: "hint", style: "margin:12px 0 0" }, "You’re on Free. Buy points below, then choose a plan.")
+      : row(h("span", { class: "hint", style: "margin:0;align-self:center" }, `${cap(cur)} renews in ${state.planDays} days${next ? `, then switches to ${cap(next)}` : ""}.`),
+          chip(state.autoRenew ? "Auto-renew on" : "Auto-renew off", { pressed: state.autoRenew, onclick: toggleAutoRenew }),
+          chip("Skip 30 days (demo)", { onclick: advanceMonth })));
+} };
+
+Object.assign(__x,{});
+},
+"src/core/subscription.js":function(__x,__r){
+// Monthly plans paid in points. Demo only: the "month" is simulated by advanceMonth().
+// Upgrades start now and charge the full price (no proration). Downgrades start at the next renewal.
+const {themes, scenes} = __r("src/generated/registry.js");
+const {state, isUnlocked, hasAddon} = __r("src/core/state.js");
+const {planOf, rank} = __r("src/core/plans.js");
+const {emit} = __r("src/core/bus.js");
+const {toast} = __r("src/core/ui.js");
+const {applyTheme, showScene} = __r("src/core/stage.js");
+const {running, stopGame} = __r("src/core/gameHost.js");
+const {setView} = __r("src/core/view.js");
+const DAYS = 30;
+
+// Called after any plan change: remove whatever the new plan no longer includes.
+function enforce() {
+  const t = themes.find((x) => x.id === state.theme);
+  if (!isUnlocked(t)) { state.theme = themes[0].id; applyTheme(themes[0]); }
+  const s = scenes.find((x) => x.id === state.scene);
+  if (s && !isUnlocked(s)) { state.scene = null; showScene(null); }
+  if (running() && !hasAddon("games")) stopGame(false);
+  const keep = Math.max(0, planOf(state.plan).devices - 1);
+  if (state.devices.length > keep) { state.devices = state.devices.slice(0, keep); state.pairing = null; setView("streamer"); }
+  emit("unlock");
+}
+function choose(id) {
+  const p = planOf(id);
+  if (id === state.plan) { if (state.nextPlan) { state.nextPlan = null; emit("unlock"); return toast(`You’ll stay on ${p.name} at renewal.`); } return toast("This is your current plan."); }
+  if (rank(id) < rank(state.plan)) { state.nextPlan = id; emit("unlock"); return toast(`${p.name} starts at your next renewal.`); }
+  if (state.wallet.streamer < p.points) return toast(`${p.name} costs ${p.points} points a month and you have ${state.wallet.streamer}. Buy points first.`);
+  state.wallet.streamer -= p.points; state.plan = id; state.planDays = p.points ? DAYS : 0; state.nextPlan = null;
+  enforce(); toast(`${p.name} is active for ${DAYS} days.`);
+}
+function advanceMonth() {
+  if (state.plan === "free") return toast("The Free plan has no renewal.");
+  const nextId = state.nextPlan || state.plan, p = planOf(nextId);
+  if (!state.autoRenew || state.wallet.streamer < p.points) {
+    const why = state.autoRenew ? `You didn’t have ${p.points} points to renew ${p.name}.` : "Your plan ended.";
+    state.plan = "free"; state.nextPlan = null; state.planDays = 0; enforce(); return toast(why + " You’re on Free now.");
+  }
+  state.wallet.streamer -= p.points; state.plan = nextId; state.planDays = DAYS; state.nextPlan = null; enforce(); toast(`${p.name} renewed for ${p.points} points.`);
+}
+function toggleAutoRenew() { state.autoRenew = !state.autoRenew; emit("unlock"); toast(state.autoRenew ? "Auto-renew is on." : "Auto-renew is off. Your plan ends at the next renewal."); }
+
+Object.assign(__x,{DAYS,choose,advanceMonth,toggleAutoRenew});
+},
+"src/core/gameHost.js":function(__x,__r){
+// Runs one game at a time for a fixed round. While a round is running no other game can start,
+// and nothing can stop it early. When the time is up the round ends and games unlock again.
+const {$, toast} = __r("src/core/ui.js");
+const {state} = __r("src/core/state.js");
+const {emit} = __r("src/core/bus.js");
+const {addPoints, randomOf} = __r("src/core/economy.js");
+const {shout} = __r("src/core/stage.js");
+const {CHALLENGES, GAME_SECONDS, MIN_GAME_POINTS} = __r("src/core/config.js");
+const cv = $("gcv"), cx = cv.getContext("2d"), W = cv.width, H = cv.height;
+let game = null, g = null, endsAt = 0, timer = null, score = 0;
+const em = (c, x, y, s) => { cx.font = s + "px serif"; cx.textAlign = "center"; cx.textBaseline = "middle"; cx.fillText(c, x, y); };
+const ctx = () => g;
+const running = () => !!game;
+const secondsLeft = () => (game ? Math.max(0, Math.ceil((endsAt - Date.now()) / 1000)) : 0);
+
+function startGame(def) {
+  if (game) return false; // one game at a time
+  game = def; score = 0; endsAt = Date.now() + (def.seconds || GAME_SECONDS) * 1000; state.game = def.id;
+  g = { cx, W, H, T: 0, s: {}, em, rnd: (a, b) => a + Math.random() * (b - a), addPoints: (n) => { score += n; addPoints(n); }, shout, toast, challenge: () => randomOf(CHALLENGES) };
+  def.boosts.forEach((b) => { b.points = Math.max(b.points, MIN_GAME_POINTS); }); // no boost is cheaper than the minimum
+  def.init?.(g);
+  timer = setInterval(() => { emit("tick"); if (Date.now() >= endsAt) stopGame(true); }, 250);
+  emit("game");
+  return true;
+}
+// finished=true when the time ran out. false is only for forced stops (for example the add-on is removed).
+function stopGame(finished) {
+  clearInterval(timer); game = null; g = null; state.game = null;
+  if (finished) shout(`Game over! You scored ${score} points 🎉`);
+  emit("game");
+}
+(function loop() { requestAnimationFrame(loop); cx.clearRect(0, 0, W, H); if (!game) return; g.T++; game.frame(g); })();
+document.addEventListener("keydown", (e) => { if (game && e.target.tagName !== "INPUT") game.onKey?.(g, e); });
+
+Object.assign(__x,{ctx,running,secondsLeft,startGame,stopGame});
+},
+"src/panels/devices.js":function(__x,__r){
+const {state, gate, feat, hasAddon} = __r("src/core/state.js");
+const {planOf} = __r("src/core/plans.js");
+const {chip, h, row} = __r("src/core/ui.js");
+const {applyLayout} = __r("src/core/view.js");
+const {emit} = __r("src/core/bus.js");
+const {newSession, openChooser, roleName} = __r("src/core/pairing.js");
+const {qrSvg} = __r("src/core/qr.js");
+__x.default = { title: "Devices", hint: "Studio only. Use up to 3 devices: the stream view, the streamer controls and the viewer page. Add a device with a QR code or link, then that device chooses what to show. Pairing is simulated here.", render(el) {
+  const f = feat("multiDevice"), max = planOf(state.plan).devices - 1;
+  const draw = () => {
+    const on = hasAddon("multiDevice"), full = state.devices.length >= max, s = state.pairing;
+    const qr = h("div", { class: "qr", role: "img" }); if (s && on) { qr.setAttribute("aria-label", "QR code for " + s.url); qr.innerHTML = qrSvg(s.url); }
+    el.replaceChildren(
+      h("div", { class: "prow" }, h("div", { class: "t" }, h("div", {}, "Device 1, this device"), h("div", { class: "mute" }, "Stream view. Shows only the overlay.")), chip("Always on", { pressed: true })),
+      ...state.devices.map((d, i) => h("div", { class: "prow" }, h("div", { class: "t" }, h("div", {}, `Device ${i + 2}`), h("div", { class: "mute" }, roleName(d.role))),
+        chip("Remove", { onclick: () => { state.devices.splice(i, 1); applyLayout(); emit("unlock"); } }))),
+      h("div", { style: "margin-top:12px" }, row(chip(on ? (full ? "Device limit reached" : "Add a device") : "Multi-device is part of Studio", { disabled: on && full, locked: !on, cost: "Studio", onclick: () => { if (!gate(f)) return; newSession(); draw(); } }))),
+      ...(s && on ? [h("div", { class: "paircard" }, qr, h("div", { class: "t" }, h("b", {}, "Scan or open the link on the other device"),
+        h("p", { class: "mute", style: "margin:4px 0" }, "It asks which view to show: controls or viewer page. Here, tap the link to act as that device."),
+        h("a", { href: s.url, onclick: (e) => { e.preventDefault(); openChooser(); } }, s.url),
+        h("div", { style: "margin-top:10px" }, chip("Cancel", { onclick: () => { state.pairing = null; draw(); } }))))] : []));
+  };
+  draw();
+} };
+
+Object.assign(__x,{});
+},
+"src/core/pairing.js":function(__x,__r){
+// Pairing a second or third device. In real life the other device scans the QR code or opens the link,
+// then sees the popup below. In this prototype you tap the link to play the part of that device.
+const {state} = __r("src/core/state.js");
+const {h, $, toast} = __r("src/core/ui.js");
+const {emit} = __r("src/core/bus.js");
+const {applyLayout} = __r("src/core/view.js");
+const ROLES = [
+  { id: "control", name: "Streamer controls", desc: "Run stickers, sounds, scenes and games from this device." },
+  { id: "viewer", name: "Viewer page", desc: "See what your viewers see and try gifting." }
+];
+const roleName = (id) => ROLES.find((r) => r.id === id).name;
+function newSession() { const code = String(Math.floor(100000 + Math.random() * 900000)); state.pairing = { code, url: `https://go.link/pair/${code}` }; }
+const close = () => { $("pairmodal").hidden = true; };
+function choose(role) {
+  state.devices.push({ role }); state.pairing = null; close(); applyLayout(); emit("unlock");
+  toast(role === "control" ? "That device now shows the streamer controls." : "That device now shows the viewer page.");
+}
+function openChooser() {
+  const taken = (r) => state.devices.some((d) => d.role === r), m = $("pairmodal");
+  const opts = ROLES.map((r) => { const b = h("button", { class: "pmopt", onclick: () => choose(r.id) }, h("b", {}, r.name), h("span", {}, taken(r.id) ? "Already in use on another device" : r.desc)); b.disabled = taken(r.id); return b; });
+  m.replaceChildren(h("div", { class: "pmcard", role: "dialog", "aria-modal": "true", "aria-labelledby": "pmt" },
+    h("h3", { id: "pmt" }, "Use this device as"), h("p", { class: "vm", style: "margin:0" }, "You opened Aina’s pairing link. Pick what this device should show."),
+    ...opts, h("button", { class: "chip", style: "justify-content:center", onclick: close }, "Cancel")));
+  m.hidden = false; (opts.find((b) => !b.disabled) || m.querySelector("button")).focus();
+}
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("pairmodal").hidden) close(); });
+
+Object.assign(__x,{ROLES,roleName,newSession,openChooser});
+},
+"src/core/qr.js":function(__x,__r){
+// Small offline QR code generator: byte mode, error correction level L, versions 1 to 5 (up to 106 characters).
+// Based on the standard QR algorithm. Returns an SVG string.
+const CAP = { 1: [19, 7], 2: [34, 10], 3: [55, 15], 4: [80, 20], 5: [108, 26] }; // [data codewords, error-correction codewords]
+const mul = (x, y) => { let z = 0; for (let i = 7; i >= 0; i--) { z = (z << 1) ^ ((z >>> 7) * 0x11d); z ^= ((y >>> i) & 1) * x; } return z; };
+function divisor(n) { const r = Array(n - 1).fill(0).concat([1]); let root = 1; for (let i = 0; i < n; i++) { for (let j = 0; j < r.length; j++) { r[j] = mul(r[j], root); if (j + 1 < r.length) r[j] ^= r[j + 1]; } root = mul(root, 2); } return r; }
+function remainder(data, div) { const r = div.map(() => 0); for (const b of data) { const f = b ^ r.shift(); r.push(0); div.forEach((c, i) => { r[i] ^= mul(c, f); }); } return r; }
+
+function qrMatrix(text) {
+  const bytes = [...new TextEncoder().encode(text)];
+  let v = 1; while (v <= 5 && bytes.length > CAP[v][0] - 2) v++;
+  if (v > 5) throw new Error("Text is too long for this QR generator");
+  const [dc, ec] = CAP[v], bits = [], put = (val, len) => { for (let i = len - 1; i >= 0; i--) bits.push((val >>> i) & 1); };
+  put(4, 4); put(bytes.length, 8); bytes.forEach((b) => put(b, 8)); put(0, Math.min(4, dc * 8 - bits.length));
+  while (bits.length % 8) bits.push(0);
+  for (let pad = 0xec; bits.length < dc * 8; pad ^= 0xec ^ 0x11) put(pad, 8);
+  const data = []; for (let i = 0; i < bits.length; i += 8) data.push(parseInt(bits.slice(i, i + 8).join(""), 2));
+  const all = data.concat(remainder(data, divisor(ec)));
+
+  const size = 17 + 4 * v, mod = Array.from({ length: size }, () => Array(size).fill(false)), fn = Array.from({ length: size }, () => Array(size).fill(false));
+  const setF = (x, y, d) => { mod[y][x] = d; fn[y][x] = true; };
+  for (let i = 0; i < size; i++) { setF(6, i, i % 2 === 0); setF(i, 6, i % 2 === 0); }
+  const finder = (cx, cy) => { for (let dy = -4; dy <= 4; dy++) for (let dx = -4; dx <= 4; dx++) { const x = cx + dx, y = cy + dy, d = Math.max(Math.abs(dx), Math.abs(dy)); if (x >= 0 && x < size && y >= 0 && y < size) setF(x, y, d !== 2 && d !== 4); } };
+  finder(3, 3); finder(size - 4, 3); finder(3, size - 4);
+  if (v >= 2) for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) setF(size - 7 + dx, size - 7 + dy, Math.max(Math.abs(dx), Math.abs(dy)) !== 1);
+  const format = (mask) => {
+    const d = (1 << 3) | mask; let r = d; for (let i = 0; i < 10; i++) r = (r << 1) ^ ((r >>> 9) * 0x537);
+    const b = ((d << 10) | r) ^ 0x5412, bit = (i) => ((b >>> i) & 1) !== 0;
+    for (let i = 0; i <= 5; i++) setF(8, i, bit(i)); setF(8, 7, bit(6)); setF(8, 8, bit(7)); setF(7, 8, bit(8));
+    for (let i = 9; i < 15; i++) setF(14 - i, 8, bit(i));
+    for (let i = 0; i < 8; i++) setF(size - 1 - i, 8, bit(i));
+    for (let i = 8; i < 15; i++) setF(8, size - 15 + i, bit(i));
+    setF(8, size - 8, true);
+  };
+  format(0);
+  let k = 0;
+  for (let right = size - 1; right >= 1; right -= 2) {
+    if (right === 6) right = 5;
+    for (let vert = 0; vert < size; vert++) for (let j = 0; j < 2; j++) {
+      const x = right - j, y = ((right + 1) & 2) === 0 ? size - 1 - vert : vert;
+      if (!fn[y][x] && k < all.length * 8) { mod[y][x] = ((all[k >>> 3] >>> (7 - (k & 7))) & 1) !== 0; k++; }
+    }
+  }
+  const MASKS = [(x, y) => (x + y) % 2 === 0, (x, y) => y % 2 === 0, (x) => x % 3 === 0, (x, y) => (x + y) % 3 === 0, (x, y) => (Math.floor(x / 3) + Math.floor(y / 2)) % 2 === 0, (x, y) => ((x * y) % 2) + ((x * y) % 3) === 0, (x, y) => (((x * y) % 2) + ((x * y) % 3)) % 2 === 0, (x, y) => (((x + y) % 2) + ((x * y) % 3)) % 2 === 0];
+  const apply = (m) => { for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) if (!fn[y][x] && MASKS[m](x, y)) mod[y][x] = !mod[y][x]; };
+  const penalty = () => {
+    let p = 0, dark = 0;
+    for (let a = 0; a < size; a++) for (const col of [false, true]) {
+      let run = 1;
+      for (let b = 1; b <= size; b++) { const cur = b < size ? (col ? mod[b][a] : mod[a][b]) : null, prev = col ? mod[b - 1][a] : mod[a][b - 1]; if (cur === prev) run++; else { if (run >= 5) p += 3 + run - 5; run = 1; } }
+    }
+    for (let y = 0; y < size - 1; y++) for (let x = 0; x < size - 1; x++) { const c = mod[y][x]; if (c === mod[y][x + 1] && c === mod[y + 1][x] && c === mod[y + 1][x + 1]) p += 3; }
+    for (const r of mod) for (const c of r) if (c) dark++;
+    return p + (Math.ceil(Math.abs(dark * 20 - size * size * 10) / (size * size)) - 1) * 10;
+  };
+  let best = 0, bestP = Infinity;
+  for (let m = 0; m < 8; m++) { apply(m); format(m); const p = penalty(); if (p < bestP) { bestP = p; best = m; } apply(m); }
+  apply(best); format(best);
+  return mod;
+}
+function qrSvg(text, px = 164) {
+  const m = qrMatrix(text), n = m.length, q = 4;
+  let d = ""; m.forEach((row, y) => row.forEach((c, x) => { if (c) d += `M${x + q},${y + q}h1v1h-1z`; }));
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${n + 2 * q} ${n + 2 * q}" width="${px}" height="${px}" shape-rendering="crispEdges"><rect width="100%" height="100%" fill="#fff"/><path d="${d}" fill="#000"/></svg>`;
+}
+
+Object.assign(__x,{qrMatrix,qrSvg});
+},
+"src/panels/games.js":function(__x,__r){
+const {lockLabel} = __r("src/core/lock.js");
+const {games} = __r("src/generated/registry.js");
+const {state, hasAddon, gate, feat} = __r("src/core/state.js");
+const {chip, h, row, rm, toast, cap} = __r("src/core/ui.js");
+const {addonChip} = __r("src/core/addon.js");
+const {running, startGame, stopGame, secondsLeft, ctx} = __r("src/core/gameHost.js");
+const {addPoints, simulateViewer, resetGoal, leaderboard, randomOf} = __r("src/core/economy.js");
+const {shout} = __r("src/core/stage.js");
+const {on, emit} = __r("src/core/bus.js");
+const {CHALLENGES, GAME_START_POINTS} = __r("src/core/config.js");
+let lead, clock, redraw;
+const fmt = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+const drawLead = () => { if (!lead) return; const l = leaderboard(); lead.replaceChildren(...(l.length ? l.map(([n, v]) => h("div", {}, h("span", {}, n), h("span", {}, `${v} pts`))) : ["No boosts yet."])); };
+const drawClock = () => { if (clock) clock.textContent = running() ? `Game in progress, ${fmt(secondsLeft())} left. Other games unlock when it ends.` : "No game running. Pick one to start a round."; };
+on("board", drawLead); on("tick", drawClock); on("game", () => redraw?.());
+
+__x.default = { title: "Game pack", hint: "Turn your live into a game with a goal bar, levels, challenges and a supporter board. Each game runs for one minute without interruption, and only one game can run at a time.", render(el) {
+  const draw = () => {
+    const open = hasAddon("games");
+    if (!open && running()) return stopGame(false); // add-on removed: the stop event redraws this panel
+    const busy = running(), cur = games.find((g) => g.id === state.game);
+    const lock = (fn) => () => { if (!open) return toast(`The game pack is part of the ${cap(feat("games").tier)} plan. Choose a plan above.`); fn(); };
+    const pick = (g) => lock(() => {
+      if (busy) return toast("A game is running. Wait until it finishes.");
+      if (!gate(g)) return;
+      startGame(g); toast(`${g.name} started. Good luck!`);
+    });
+    lead = h("div", { class: "hint", id: "lead" }); clock = h("p", { class: "hint" });
+    el.replaceChildren(
+      row(addonChip("games"), chip(`Viewers can start games: ${state.viewerStart ? "On" : "Off"}`, { pressed: state.viewerStart, locked: !open, cost: lockLabel(feat("games")), onclick: lock(() => { state.viewerStart = !state.viewerStart; emit("vstart"); draw(); toast(state.viewerStart ? "Viewers can now start games with their points." : "Viewers can no longer start games."); }) })),
+      h("p", { class: "hint", style: "margin:8px 0 0" }, `When on, a viewer can start a game round by spending ${GAME_START_POINTS} points. When off, viewers only see games you start.`),
+      h("label", { class: "lab" }, "You trigger"),
+      row(chip("Spin challenge wheel", { onclick: lock(() => { const t = randomOf(CHALLENGES); shout("Challenge: " + t); toast("Wheel landed on: " + t); }) }),
+          chip("Add 20 points", { onclick: lock(() => addPoints(20)) }), chip("Reset goal", { onclick: lock(resetGoal) })),
+      h("label", { class: "lab" }, "Mini-game"),
+      row(...games.map((g) => chip(g.name, { pressed: state.game === g.id, disabled: busy, locked: !gate(g, true), cost: lockLabel(g), onclick: pick(g) }))),
+      clock,
+      ...(cur ? [row(...cur.controls.map((c) => chip(c.label, { onclick: () => c.run(ctx()) }))),
+        h("label", { class: "lab" }, "Simulate a viewer (real viewers pay with points on their page)"),
+        row(...cur.boosts.map((b) => chip(`${b.label}, ${b.points} pts`, { onclick: () => { simulateViewer(b.points, b.label); b.run(ctx()); } }))),
+        h("p", { class: "hint" }, cur.tip)] : []),
+      h("label", { class: "lab" }, "Top supporters"), lead);
+    drawLead(); drawClock();
+  };
+  redraw = draw; draw();
+} };
+
+Object.assign(__x,{});
+},
+"src/core/addon.js":function(__x,__r){
+const {hasAddon, feat} = __r("src/core/state.js");
+const {chip, toast, cap} = __r("src/core/ui.js");
+// Shows whether a whole feature (game pack, showcase) is included in the current plan.
+function addonChip(key) {
+  const f = feat(key), on = hasAddon(key);
+  return chip(on ? `${f.name} included in your plan` : `${f.name} is part of ${cap(f.tier)}`, { pressed: on, onclick: () => toast(on ? `${f.name} is on.` : `Choose the ${cap(f.tier)} plan above to use ${f.name.toLowerCase()}.`) });
+}
+
+Object.assign(__x,{addonChip});
+},
+"src/panels/showcase.js":function(__x,__r){
+const {state, hasAddon} = __r("src/core/state.js");
+const {addonChip} = __r("src/core/addon.js");
+const {chip, h, row, rm, toast, $} = __r("src/core/ui.js");
+const thumb = (p) => { if (p.img) return h("img", { class: "th", src: p.img, alt: "" }); return h("div", { class: "th" }, "🛍️"); };
+function drawShelf() {
+  const s = $("shelf"), p = state.products[state.featured];
+  s.classList.toggle("on", !!p);
+  s.replaceChildren(...(p ? [h("div", { class: "card" }, thumb(p), h("div", {}, h("b", {}, p.name), h("span", {}, rm(p.price)), h("br"), h("small", {}, p.code)), h("div", { class: "go" }, "Buy"))] : []));
+}
+__x.default = { title: "Product showcase", hint: "Show what you sell at the bottom of your stream. Upload a photo and paste your link, and we make the Buy button.", render(el) {
+  let img = null;
+  const list = h("div"), open = hasAddon("showcase");
+  const drawList = () => { list.replaceChildren(...state.products.map((p, i) => h("div", { class: "prow" }, thumb(p),
+    h("div", { class: "t" }, h("div", {}, p.name), h("div", { class: "mute" }, rm(p.price) + ", " + p.code)),
+    chip(state.featured === i ? "Showing" : "Show", { pressed: state.featured === i, onclick: () => { state.featured = state.featured === i ? -1 : i; drawShelf(); drawList(); } }),
+    chip("Remove", { onclick: () => { state.products.splice(i, 1); state.featured = state.featured === i ? -1 : state.featured > i ? state.featured - 1 : state.featured; drawShelf(); drawList(); } })))); };
+  const photo = h("input", { type: "file", accept: "image/*", style: "position:absolute;opacity:0;width:1px;height:1px", onchange: (e) => { const f = e.target.files[0]; img = f ? URL.createObjectURL(f) : null; lab.textContent = f ? f.name.slice(0, 22) : "Choose product photo"; } });
+  const lab = h("label", { class: "chip", for: "pimg" }, "Choose product photo"); photo.id = "pimg";
+  const name = h("input", { type: "text", placeholder: "Product name", maxlength: "40", "aria-label": "Product name" });
+  const price = h("input", { type: "text", placeholder: "Price in RM", inputmode: "decimal", "aria-label": "Price in RM" });
+  const link = h("input", { type: "text", placeholder: "Link, https://...", "aria-label": "Product link" });
+  const add = chip("Add product", { onclick: () => {
+    if (!open) return toast("Unlock the showcase to add products.");
+    const pr = parseFloat(price.value);
+    if (!name.value.trim() || !(pr > 0)) return toast("Add a product name and a price in RM.");
+    if (!/^https?:\/\//i.test(link.value.trim())) return toast("Paste a full link that starts with https://");
+    state.products.push({ name: name.value.trim(), price: pr, link: link.value.trim(), img, code: "go.link/" + Math.random().toString(36).slice(2, 6) });
+    state.featured = state.products.length - 1; img = null; [name, price, link].forEach((i) => (i.value = "")); lab.textContent = "Choose product photo";
+    drawShelf(); drawList(); toast("Added. The Buy card is live on the preview.");
+  } });
+  el.replaceChildren(row(addonChip("showcase")), h("div", { class: "fld", style: open ? "" : "opacity:.5" }, lab, photo, name, price, link, add), list,
+    h("p", { class: "hint" }, "Viewers can’t tap a video, so the Buy card shows a short link that you also pin in chat."));
+  drawList(); drawShelf();
+} };
+
+Object.assign(__x,{});
+},
+"src/panels/customize.js":function(__x,__r){
+const {state} = __r("src/core/state.js");
+const {h, $} = __r("src/core/ui.js");
+__x.default = { title: "Customize", hint: "Change the badge text and the color mood.", render(el) {
+  const t = h("input", { type: "text", maxlength: "12", "aria-label": "Badge text", oninput: (e) => { state.badge = e.target.value; $("badge").textContent = state.badge || "LIVE"; } });
+  const m = h("input", { type: "range", min: "0", max: "100", "aria-label": "Color mood", oninput: (e) => { state.mood = +e.target.value; document.documentElement.style.setProperty("--mood", state.mood / 100 * 0.35); } });
+  t.value = state.badge; m.value = state.mood;
+  el.replaceChildren(t, h("label", { class: "lab" }, "Color mood (off by default, keeps your skin tone natural)"), m);
+} };
+
+Object.assign(__x,{});
+},
+"src/viewer/viewer.js":function(__x,__r){
+// The page a viewer opens from the short link. Viewers spend their own points here. It reads the same
+// registry and state as the streamer controls: they only see what the streamer has unlocked.
+const {themes, stickers, premiumStickers, games, pointPacks} = __r("src/generated/registry.js");
+const {state, isUnlocked, hasAddon} = __r("src/core/state.js");
+const {h, rm, pts, toast} = __r("src/core/ui.js");
+const {on} = __r("src/core/bus.js");
+const {running, secondsLeft, ctx, startGame} = __r("src/core/gameHost.js");
+const {spendViewer, addPoints, leaderboard} = __r("src/core/economy.js");
+const {floatExclusive, floatEmoji} = __r("src/core/stage.js");
+const {buyPack} = __r("src/core/wallet.js");
+const {MIN_GAME_POINTS, VIEWER_MAX_RM, GAME_START_POINTS} = __r("src/core/config.js");
+
+const V = { tab: "game", boost: 0, stk: null, pack: null, name: "Kai", pay: "FPX" };
+const PAY = ["FPX", "Touch ’n Go", "Card"];
+let root, clock, board, gl, gf, gn;
+const fmt = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+const btn = (cls, kids, onclick, pressed) => { const b = h("button", { class: cls, onclick }, ...kids); if (pressed !== undefined) b.setAttribute("aria-pressed", pressed); return b; };
+const go = (tab) => { V.tab = tab; draw(); };
+const drawClock = () => { if (clock) clock.textContent = running() ? `Round ends in ${fmt(secondsLeft())}` : "No round running"; };
+const drawGoal = () => { if (gl) { gl.textContent = "Lv " + state.level; gf.style.width = Math.min(100, state.points / state.goal * 100) + "%"; gn.textContent = `${state.points}/${state.goal}`; } };
+const drawBoard = () => { if (!board) return; const l = leaderboard(); board.replaceChildren(h("b", {}, "Top supporters"), ...(l.length ? l.map(([n, v], i) => h("div", { class: "vrow" }, h("span", {}, `${i + 1}. ${n}`), h("b", {}, pts(v)))) : [h("p", { class: "vm" }, "No boosts yet. Be the first.")])); };
+const nameField = () => { const i = h("input", { id: "vname", type: "text", maxlength: "16", oninput: (e) => { V.name = e.target.value; } }); i.value = V.name; return [h("label", { for: "vname" }, "Name shown on stream"), i]; };
+
+// Only shown while no round runs. The streamer decides in the Game pack section whether viewers may start games.
+function startCard() {
+  const list = games.filter(isUnlocked), cost = (x) => x.startPoints ?? GAME_START_POINTS;
+  const intro = h("div", { class: "vcard" }, h("b", {}, "No round running"), h("p", { class: "vm" }, state.viewerStart && list.length ? "Start one yourself with your points, or wait for the streamer." : "The streamer starts the next game. Boosts open when it begins."));
+  if (!state.viewerStart || !list.length) return [intro, board];
+  if (!list.find((x) => x.id === V.start)) V.start = list[0].id;
+  const sel = list.find((x) => x.id === V.start);
+  return [intro,
+    h("div", { class: "vcard" }, h("b", {}, "Start a game"), h("p", { class: "vm" }, "Each game runs as one uninterrupted round. Everyone can join it with points."),
+      h("div", { class: "vgrid" }, ...list.map((x) => btn("vopt", [h("b", {}, x.name), h("span", { class: "vm" }, pts(cost(x)))], () => { V.start = x.id; draw(); }, V.start === x.id)))),
+    btn("vbig", [`Start ${sel.name}, ${pts(cost(sel))}`], () => {
+      if (running()) return toast("A round is already running.");
+      if (!state.viewerStart) return toast("The streamer turned this off.");
+      if (spendViewer(cost(sel), `a ${sel.name} round`, V.name || "Guest")) startGame(sel); else go("points");
+    }),
+    board];
+}
+function gameTab(g) {
+  if (!hasAddon("games")) return [h("div", { class: "vcard" }, "Games aren’t turned on for this stream.")];
+  if (!g) return startCard();
+  V.boost = Math.min(V.boost, g.boosts.length - 1);
+  const b = g.boosts[V.boost];
+  clock = h("span", { class: "vchip" });
+  return [
+    h("div", { class: "vcard" }, h("div", { class: "vrow" }, h("b", {}, g.name + " is live"), clock), h("p", { class: "vm" }, `Join with points. The smallest boost is ${MIN_GAME_POINTS} points.`),
+      h("div", { class: "vgrid" }, ...g.boosts.map((x, i) => btn("vopt", [h("b", {}, x.label), h("span", { class: "vm" }, pts(x.points))], () => { V.boost = i; draw(); }, V.boost === i)))),
+    btn("vbig", [`Send ${b.label}, ${pts(b.points)}`], () => { if (!running()) return toast("The round has ended."); const w = spendViewer(b.points, b.label, V.name || "Guest"); if (w) b.run(ctx()); else go("points"); }),
+    board
+  ];
+}
+function stickerTab() {
+  const list = [...stickers, ...premiumStickers].filter(isUnlocked);
+  if (!list.length) return [h("div", { class: "vcard" }, "The streamer hasn’t unlocked any stickers yet.")];
+  const id = (s) => s.type + ":" + s.id;
+  if (!list.find((s) => id(s) === V.stk)) V.stk = id(list[0]);
+  const sel = list.find((s) => id(s) === V.stk);
+  const grid = (arr) => h("div", { class: "vgrid" }, ...arr.map((s) => {
+    const im = h("div", { class: "vim" }); if (s.svg) im.innerHTML = s.svg; else im.textContent = s.emoji;
+    return btn("vopt", [im, h("b", {}, s.name), h("span", { class: "vm" }, pts(s.points))], () => { V.stk = id(s); draw(); }, V.stk === id(s));
+  }));
+  const normal = list.filter((s) => !s.svg), prem = list.filter((s) => s.svg);
+  return [
+    h("div", { class: "vcard" }, h("b", {}, "Stickers"), h("p", { class: "vm" }, "Gift a sticker to pop it up on the stream."), normal.length ? grid(normal) : h("p", { class: "vm" }, "None unlocked yet."),
+      h("b", {}, "Premium stickers"), prem.length ? grid(prem) : h("p", { class: "vm" }, "None unlocked yet.")),
+    h("div", { class: "vcard" }, ...nameField()),
+    btn("vbig", [`Send ${sel.name}, ${pts(sel.points)}`], () => {
+      const who = spendViewer(sel.points, sel.name, V.name || "Guest"); if (!who) return go("points");
+      if (sel.svg) floatExclusive(sel, who); else floatEmoji(sel.emoji);
+      if (hasAddon("games")) addPoints(Math.ceil(sel.points / 2));
+    })
+  ];
+}
+function pointsTab() {
+  const packs = pointPacks.filter((p) => p.rm <= VIEWER_MAX_RM);
+  if (!packs.find((p) => p.id === V.pack)) V.pack = packs[0].id;
+  const pk = packs.find((p) => p.id === V.pack);
+  return [
+    h("div", { class: "vcard" }, h("b", {}, `You have ${pts(state.wallet.viewer)}`), h("p", { class: "vm" }, "Use points for stickers and to join games."),
+      h("div", { class: "vgrid" }, ...packs.map((p) => btn("vopt", [h("b", {}, rm(p.rm)), h("span", { class: "vm" }, `${p.points} points`)], () => { V.pack = p.id; draw(); }, V.pack === p.id)))),
+    h("div", { class: "vcard" }, h("b", {}, "Pay with"), h("div", { class: "vpay" }, ...PAY.map((p) => btn("vopt vsm", [p], () => { V.pay = p; draw(); }, V.pay === p)))),
+    btn("vbig", [`Pay ${rm(pk.rm)} for ${pk.points} points`], () => buyPack("viewer", pk)),
+    h("p", { class: "vm vc" }, "Demo: no payment is taken.")
+  ];
+}
+function draw() {
+  const t = themes.find((x) => x.id === state.theme), g = games.find((x) => x.id === state.game);
+  root.style.setProperty("--va", t.accent);
+  clock = null; board = h("div", { class: "vcard" }); gl = h("span"); gf = h("i"); gn = h("span");
+  const tabs = [["game", "Game"], ["stickers", "Stickers"], ["points", "Points"]];
+  root.replaceChildren(
+    h("div", { class: "vhead" }, h("div", { class: "vav" }, t.charm || t.sideCharm || "A"), h("div", {}, h("b", {}, "Aina’s live"), h("small", {}, "Theme: " + t.name)), h("span", { class: "vchip" }, pts(state.wallet.viewer))),
+    ...(hasAddon("games") ? [h("div", { class: "vgoal" }, gl, h("div", { class: "vtrk" }, gf), gn)] : []),
+    h("div", { class: "vtabs" }, ...tabs.map(([k, l]) => btn("vtab", [l], () => go(k), V.tab === k))),
+    h("div", { class: "vscroll" }, ...(V.tab === "game" ? gameTab(g) : V.tab === "stickers" ? stickerTab() : pointsTab())));
+  drawClock(); drawGoal(); drawBoard();
+}
+function mountViewer(el) {
+  root = el; ["game", "unlock", "theme", "vwallet", "vstart"].forEach((e) => on(e, draw));
+  on("tick", drawClock); on("board", drawBoard); on("points", drawGoal);
+  draw();
+}
+
+Object.assign(__x,{mountViewer});
+},
+"src/core/camera.js":function(__x,__r){
+// Optional: show the camera, or a photo, inside the preview phone. Everything stays in the browser and is never uploaded.
+const {$, toast} = __r("src/core/ui.js");
+let stream = null, photoUrl = null;
+const sync = () => {
+  $("phone").classList.toggle("has-cam", !!stream); $("phone").classList.toggle("has-photo", !!photoUrl);
+  $("cambtn").textContent = stream ? "Turn off camera" : "Use my camera"; $("cambtn").setAttribute("aria-pressed", String(!!stream));
+  $("photobtn").textContent = photoUrl ? "Remove photo" : "Use a photo"; $("photobtn").setAttribute("aria-pressed", String(!!photoUrl));
+};
+function stopCamera() { stream?.getTracks().forEach((t) => t.stop()); stream = null; $("camv").srcObject = null; sync(); }
+function clearPhoto() { if (photoUrl) URL.revokeObjectURL(photoUrl); photoUrl = null; $("camimg").removeAttribute("src"); }
+async function toggleCamera() {
+  if (stream) { stopCamera(); return toast("Camera off."); }
+  if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) return toast("Phones only allow the camera on secure (https) pages, not on a saved file. Host the page on an https site, or tap Use a photo.");
+  try {
+    const portrait = innerHeight > innerWidth; // ask for the shape that fits the screen
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: { ideal: portrait ? 720 : 1280 }, height: { ideal: portrait ? 1280 : 720 } }, audio: false });
+    clearPhoto(); const v = $("camv"); v.srcObject = stream; await v.play().catch(() => {});
+    stream.getVideoTracks()[0].addEventListener("ended", () => { stopCamera(); toast("The camera stopped."); });
+    sync(); toast("Camera on. It stays on this device and isn’t uploaded.");
+  } catch (e) {
+    stream = null; sync();
+    const policy = document.permissionsPolicy || document.featurePolicy; // set by the page that embeds us
+    if (policy && !policy.allowsFeature("camera")) return toast("This page is shown inside a frame that doesn’t allow the camera, so your browser never asks. Open the page directly, or tap Use a photo.");
+    toast(e.name === "NotAllowedError" ? "Camera blocked. Allow it in your browser settings for this page, or tap Use a photo." : e.name === "NotFoundError" ? "No camera found. Tap Use a photo instead." : "Couldn’t start the camera. Tap Use a photo instead.");
+  }
+}
+// Works everywhere: on a phone it opens the selfie camera app, on a laptop it opens the file picker.
+function togglePhoto() {
+  if (photoUrl) { clearPhoto(); sync(); return toast("Photo removed."); }
+  $("campick").click();
+}
+function setPhoto(file) {
+  if (!file) return;
+  stopCamera(); clearPhoto(); photoUrl = URL.createObjectURL(file); $("camimg").src = photoUrl; sync(); toast("Photo on the preview. It stays on this device.");
+}
+
+Object.assign(__x,{stopCamera,toggleCamera,togglePhoto,setPhoto});
+}};const __c={};function __r(k){if(!__c[k]){__c[k]={};__m[k](__c[k],__r)}return __c[k]}__r("src/main.js")})();
+</script>
+</body>
+</html>
